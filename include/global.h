@@ -1,3 +1,10 @@
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
+#include <cstdint>
+#include <vector>
+
+#include "signal.h"
 
 int payload_size = 612 * 8;
 
@@ -26,7 +33,7 @@ int degree_trace_half;
 int trace_swap;
 int trace_shift;
 
-param PSparam(1024, ptxt_modulus, 2, 80, 0.5); 
+struct param PSparam(1024, ptxt_modulus, 2, 80, 0.5, 40);
 
 std::vector<std::vector<uint32_t>> coeff_rangeCheck = 
 {{0,216615,237416,741379,99137,105134,235513,643136},
@@ -35,3 +42,5 @@ std::vector<std::vector<uint32_t>> coeff_rangeCheck =
 {361791,80486,126394,391207,551639,528197,478787,88772},
 {710790,716155,456692,301062,159136,300549,8286,765893},
 {1,0,0,0,0,0,0,0}};
+
+#endif

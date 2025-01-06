@@ -79,7 +79,7 @@ void sophomr() {
     cout << "Setup Finished!\n" << endl;
 
     printParam(context, context_trace);
-    saveKeys(context, context_comp, PSsk_enc, swk);
+//    saveKeys(context, context_comp, PSsk_enc, swk);
 
 
 
@@ -147,7 +147,7 @@ void sophomr() {
     cout << "\t Compression Finished!" << endl;
     cout << "\t Compression time: " << chrono::duration<double>(clock_end - clock_start).count() << "sec\n" << endl;
 
-    Serial::SerializeToFile("data/digest.txt", digest, SerType::BINARY);
+//    Serial::SerializeToFile("data/digest.txt", digest, SerType::BINARY);
 
 
 

@@ -77,3 +77,6 @@ endif()
 
 add_executable( test main.cpp )
 target_link_libraries( test ntl m gmp )
+
+add_executable( snake-eye snake-eye.cpp )
+target_link_libraries( snake-eye ntl m gmp )

@@ -1,8 +1,15 @@
+#ifndef SIGNAL_H
+#define SIGNAL_H
+
+#include <cstdint>
+#include <vector>
+
+#include <openfhe.h>
 
 struct param{
-    int n; int q; int ell; int h; double sigma;
-    param(int n, int q, int ell, int h, double sigma)
-    : n(n), q(q), ell(ell), h(h), sigma(sigma)
+    int n; int q; int ell; int h; double sigma; int r;
+    param(int n, int q, int ell, int h, double sigma, int r)
+    : n(n), q(q), ell(ell), h(h), sigma(sigma), r(r)
     {}
 };
 
@@ -45,7 +52,7 @@ std::vector<std::vector<uint64_t>> expand(NativeVector a, int n, int q) {
 
 NativeVector ringMult(NativeVector a, NativeVector b, int n, int q, int ell) 
 {
-    NativeVector res = NativeVector(ell);
+    NativeVector res = NativeVector(ell, q);
 
     std::vector<std::vector<uint64_t>> a_expanded = expand(a, n, q);
     for (int i = 0; i < ell; i++) {
@@ -94,3 +101,16 @@ void PSsignal(Signal& sig, const PSpk& pk, const param& param)
         sig.b[i].ModAddFastEq(dgg.GenerateInteger(param.q), param.q);
     }
 }
+
+bool PSdetect(const Signal& sig, const PSsk& sk, const param& param)
+{
+    NativeVector d{sig.b.ModSub(ringMult(sig.a, sk, param.n, param.q, param.ell))};
+    for (std::size_t i = 0; i < d.GetLength(); ++i) {
+        auto n = static_cast<int>(d[i].ConvertToInt());
+        if (n > param.r || n < -param.r)
+            return false;
+    }
+    return true;
+}
+
+#endif

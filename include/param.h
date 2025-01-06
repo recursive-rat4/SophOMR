@@ -20,6 +20,7 @@ void param_OMR_65536_50()
     PSparam.ell = 2;
     PSparam.h = 80;
     PSparam.sigma = 0.5; 
+    PSparam.r = 40;
 
     coeff_rangeCheck = 
     {{0,216615,237416,741379,99137,105134,235513,643136},
@@ -53,6 +54,7 @@ void param_OMD_65536_50()
     PSparam.ell = 2;
     PSparam.h = 80;
     PSparam.sigma = 0.5; 
+    PSparam.r = 40;
 
     coeff_rangeCheck = 
     {{0,216615,237416,741379,99137,105134,235513,643136},
@@ -84,6 +86,7 @@ void param_OMR_524288_50()
     PSparam.ell = 2;
     PSparam.h = 80;
     PSparam.sigma = 0.5; 
+    PSparam.r = 40;
 
     coeff_rangeCheck = 
     {{0,216615,237416,741379,99137,105134,235513,643136},
@@ -117,6 +120,7 @@ void param_OMD_524288_50()
     PSparam.ell = 2;
     PSparam.h = 80;
     PSparam.sigma = 0.5; 
+    PSparam.r = 40;
 
     coeff_rangeCheck = 
     {{0,216615,237416,741379,99137,105134,235513,643136},
