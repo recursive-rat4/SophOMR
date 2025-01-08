@@ -17,7 +17,7 @@ cmake_minimum_required (VERSION 3.5.1)
 ### If you need your application to be linked statically, then run "cmake .. -DBUILD_STATIC=ON"
 
 project(demo CXX)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 option( BUILD_STATIC "Set to ON to include static versions of the library" OFF)
 
 ### pass a value for OPENFHE_INSTALL_DIR if there is an issue locatig the correct package

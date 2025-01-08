@@ -106,8 +106,8 @@ bool PSdetect(const Signal& sig, const PSsk& sk, const param& param)
 {
     NativeVector d{sig.b.ModSub(ringMult(sig.a, sk, param.n, param.q, param.ell))};
     for (std::size_t i = 0; i < d.GetLength(); ++i) {
-        auto n = static_cast<int>(d[i].ConvertToInt());
-        if (n > param.r || n < -param.r)
+        int n = d[i].ConvertToInt();
+        if (n > param.r && n < param.q - param.r)
             return false;
     }
     return true;

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <numbers>
 
 #include "include/global.h"
 #include "include/signal.h"
@@ -16,12 +17,12 @@ Signal generateSignal() {
 }
 
 Signal generateSnakeEye() {
-    lbcrypto::TernaryUniformGeneratorImpl<NativeVector> tug;
+    lbcrypto::DiscreteGaussianGeneratorImpl<NativeVector> dgg(std::numbers::pi);
     Signal signal;
     // signal.a = NativeVector(PSparam.n, PSparam.q);
     // signal.b = NativeVector(PSparam.ell, PSparam.q);
-    signal.a = tug.GenerateVector(PSparam.n, PSparam.q);
-    signal.b = tug.GenerateVector(PSparam.ell, PSparam.q);
+    signal.a = dgg.GenerateVector(PSparam.n, PSparam.q);
+    signal.b = dgg.GenerateVector(PSparam.ell, PSparam.q);
     return signal;
 }
 
