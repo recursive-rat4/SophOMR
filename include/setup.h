@@ -3,6 +3,11 @@
 #include "key/key-ser.h"
 #include "scheme/bfvrns/bfvrns-ser.h"
 
+struct PSSKENC {
+    lbcrypto::Ciphertext<lbcrypto::DCRTPoly> a;
+    std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>> b;
+};
+
 void updateGlobal()
 {
     payload_len = ceil((payload_size)/log2(ptxt_modulus));
@@ -39,20 +44,31 @@ void enable(lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context)
     context->Enable(lbcrypto::LEVELEDSHE); 
 }
 
-lbcrypto::Ciphertext<lbcrypto::DCRTPoly> encryptPSsk(const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context, 
+PSSKENC encryptPSsk(const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context,
                                                         const lbcrypto::PrivateKey<lbcrypto::DCRTPoly>& HEsk, 
                                                         const PSsk& PSsk)
 {
     std::vector<int64_t> PSsk_vec(degree);
     for (int i = 0; i < degree; i++) {
-        PSsk_vec[i] = PSsk[i % PSparam.n].ConvertToInt();
+        PSsk_vec[i] = PSsk.a[i % PSparam.n].ConvertToInt();
         if (int(PSsk_vec[i]) == PSparam.q - 1) { PSsk_vec[i] = ptxt_modulus - 1; }
     }
         
-    auto PSsk_ptxt = context->MakePackedPlaintext(PSsk_vec);
-    auto PSsk_enc = context->Encrypt(HEsk, PSsk_ptxt);
+    auto PSsk_ptxt_a = context->MakePackedPlaintext(PSsk_vec);
+    auto PSsk_enc_a = context->Encrypt(HEsk, PSsk_ptxt_a);
 
-    return PSsk_enc;
+    std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>> PSsk_enc_b(PSparam.ell);
+    for (int l = 0; l < PSparam.ell; ++l) {
+        for (int i = 0; i < degree; ++i) {
+            PSsk_vec[i] = PSsk.b[l].ConvertToInt();
+            if (int(PSsk_vec[i]) == PSparam.q - 1) { PSsk_vec[i] = ptxt_modulus - 1; }
+        }
+
+        auto PSsk_ptxt_b = context->MakePackedPlaintext(PSsk_vec);
+        PSsk_enc_b[l] = context->Encrypt(HEsk, PSsk_ptxt_b);
+    }
+
+    return { PSsk_enc_a, PSsk_enc_b };
 }
 
 void liftsk(lbcrypto::KeyPair<lbcrypto::DCRTPoly>& keyPair_comp, const lbcrypto::KeyPair<lbcrypto::DCRTPoly>& keyPair_trace)
@@ -145,14 +161,14 @@ void printParam(const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context,
     << ", " << ScalingModSize * context_trace->GetCryptoParameters()->GetElementParams()->GetParams().size()
     << ", " << ptxt_modulus << ")" << endl;
 
-    cout << "PSparam: \t(n, q, ell, h, sigma) \t= (" 
-    << PSparam.n << ", " << PSparam.q << ", " << PSparam.ell << ", " << PSparam.h << ", " << PSparam.sigma 
+    cout << "PSparam: \t(n, q, ell, h, sigma, r) \t= ("
+    << PSparam.n << ", " << PSparam.q << ", " << PSparam.ell << ", " << PSparam.h << ", " << PSparam.sigma << ", " << PSparam.r
     << ")" << endl << endl;
 }
 
 void saveKeys(const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context, 
                 const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context_comp, 
-                const lbcrypto::Ciphertext<lbcrypto::DCRTPoly>& PSsk_enc, 
+                const PSSKENC& PSsk_enc,
                 const lbcrypto::EvalKey<lbcrypto::DCRTPoly>& swk)
 {
     std::ofstream mkeyfile("data/key-mult.txt", std::ios::out | std::ios::binary);
@@ -167,7 +183,8 @@ void saveKeys(const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context,
         rkeyfile.close();
     }
 
-    lbcrypto::Serial::SerializeToFile("data/PSsk_enc.txt", PSsk_enc, lbcrypto::SerType::BINARY);
+    lbcrypto::Serial::SerializeToFile("data/PSsk_enc_a.txt", PSsk_enc.a, lbcrypto::SerType::BINARY);
+    lbcrypto::Serial::SerializeToFile("data/PSsk_enc_b.txt", PSsk_enc.b, lbcrypto::SerType::BINARY);
 
     lbcrypto::Serial::SerializeToFile("data/swk.txt", swk, lbcrypto::SerType::BINARY);
 }

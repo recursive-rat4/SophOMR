@@ -1,5 +1,5 @@
-#ifndef SIGNAL_H
-#define SIGNAL_H
+#ifndef BLACKLEMON_H
+#define BLACKLEMON_H
 
 #include <cstdint>
 #include <vector>
@@ -13,19 +13,29 @@ struct param{
     {}
 };
 
-typedef NativeVector PSsk;
+struct PSsk{
+    NativeVector a;
+    NativeVector b;
+};
 
 struct Signal{
     NativeVector a;
     NativeVector b;
 };
 
-typedef Signal PSpk;
+struct PSpk{
+    NativeVector a;
+    NativeVector b;
+    NativeVector c;
+};
 
 PSsk PSskGen(const param& param) 
 {
     lbcrypto::TernaryUniformGeneratorImpl<NativeVector> tug;
-    PSsk sk = tug.GenerateVector(param.n, param.q, param.h);
+    lbcrypto::DiscreteUniformGeneratorImpl<NativeVector> dug;
+    PSsk sk;
+    sk.a = tug.GenerateVector(param.n, param.q, param.h);
+    sk.b = dug.GenerateVector(param.ell, param.q);
     return sk;
 }
 
@@ -75,7 +85,8 @@ PSpk PSpkGen(const param& param, const PSsk& sk)
     dug.SetModulus(param.q);
 
     pk.a = dug.GenerateVector(param.n);
-    pk.b = ringMult(pk.a, sk, param.n, param.q, param.n);
+    pk.b = ringMult(pk.a, sk.a, param.n, param.q, param.n);
+    pk.c = sk.b;
 
     lbcrypto::DiscreteGaussianGeneratorImpl<NativeVector> dgg(param.sigma);
     for (int i = 0; i < param.n; i++) {
@@ -100,11 +111,15 @@ void PSsignal(Signal& sig, const PSpk& pk, const param& param)
     for(int i = 0; i < param.ell; i++){
         sig.b[i].ModAddFastEq(dgg.GenerateInteger(param.q), param.q);
     }
+
+    sig.b.ModSubEq(pk.c);
 }
 
 bool PSdetect(const Signal& sig, const PSsk& sk, const param& param)
 {
-    NativeVector d{sig.b.ModSub(ringMult(sig.a, sk, param.n, param.q, param.ell))};
+    NativeVector d{sig.b};
+    d.ModSubEq(ringMult(sig.a, sk.a, param.n, param.q, param.ell));
+    d.ModAddEq(sk.b);
     for (std::size_t i = 0; i < d.GetLength(); ++i) {
         int n = d[i].ConvertToInt();
         if (n > param.r && n < param.q - param.r)

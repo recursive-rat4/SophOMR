@@ -1,8 +1,8 @@
 #include <iostream>
 #include <numbers>
 
+#include "include/blacklemon.h"
 #include "include/global.h"
-#include "include/signal.h"
 
 Signal generateSignal(const PSsk& secretKey) {
     Signal signal;

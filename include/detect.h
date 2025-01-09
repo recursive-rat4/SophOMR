@@ -3,11 +3,11 @@ void affine(std::vector<std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>>>& 
             const std::vector<std::vector<uint64_t>>& signals_a, 
             const std::vector<std::vector<uint64_t>>& signals_b, 
             const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context, 
-            const lbcrypto::Ciphertext<lbcrypto::DCRTPoly>& PSsk_enc)
+            const PSSKENC& PSsk_enc)
 {   
     // Baby-step
     std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>> PSsk_bs(b_tilde1);
-    PSsk_bs[0] = PSsk_enc;
+    PSsk_bs[0] = PSsk_enc.a;
     for (int b = 0; b < b_tilde1 - 1; b++) {
         PSsk_bs[b+1] = context->EvalRotate(PSsk_bs[b], 1);
     }
@@ -62,6 +62,17 @@ void affine(std::vector<std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>>>& 
                 vec_ints[m] = signals_b[idx + m][l];
             }
             output[i][l] = context->EvalSub(output[i][l], context->MakePackedPlaintext(vec_ints)); 
+        }
+    }
+}
+
+void repelSnakes(std::vector<std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>>>& output,
+            const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context,
+            const PSSKENC& PSsk_enc)
+{
+    for (int i = 0; i < numctxt; i++) {
+        for (int l = 0; l < PSparam.ell; l++) {
+            context->EvalSubInPlace(output[i][l], PSsk_enc.b[l]);
         }
     }
 }
@@ -203,7 +214,7 @@ void detect(std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>>& output,
                 const std::vector<std::vector<uint64_t>>& signals_a, 
                 const std::vector<std::vector<uint64_t>>& signals_b, 
                 const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context, 
-                const lbcrypto::Ciphertext<lbcrypto::DCRTPoly>& PSsk_enc, 
+                const PSSKENC& PSsk_enc,
                 const lbcrypto::EvalKey<lbcrypto::DCRTPoly>& swk)
 {     
     using namespace std;
@@ -221,6 +232,16 @@ void detect(std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>>& output,
     clock_end = chrono::high_resolution_clock::now();
     cout << "\t\t Affine Transform Finished!" << endl;
     cout << "\t\t Affine Transform time: " << chrono::duration<double>(clock_end - clock_start).count() << "sec\n" << endl;
+
+
+    cout << "\t\t Repelling Snakes Started!\n" << endl;
+    clock_start = chrono::high_resolution_clock::now();
+
+    repelSnakes(PV_ell, context, PSsk_enc);
+
+    clock_end = chrono::high_resolution_clock::now();
+    cout << "\t\t Repelling Snakes Finished!" << endl;
+    cout << "\t\t Repelling Snakes time: " << chrono::duration<double>(clock_end - clock_start).count() << "sec\n" << endl;
 
 
     cout << "\t\t RangeCheck Started!\n" << endl;
