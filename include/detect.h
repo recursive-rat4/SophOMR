@@ -70,10 +70,25 @@ void repelSnakes(std::vector<std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly
             const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context,
             const PSSKENC& PSsk_enc)
 {
+    std::vector<int64_t> ptxt_vec(degree);
+    for (int i = 0; i < degree; ++i)
+        ptxt_vec[i] = i % 2;
+    auto mask_0 = context->MakePackedPlaintext(ptxt_vec);
+    for (int i = 0; i < degree; ++i)
+        ptxt_vec[i] = (i + 1) % 2;
+    auto mask_1 = context->MakePackedPlaintext(ptxt_vec);
+
+    auto b_rot = context->EvalRotate(PSsk_enc.b, 1);
+    auto b_mask_0 = context->EvalMult(PSsk_enc.b, mask_0);
+    auto b_mask_1 = context->EvalMult(PSsk_enc.b, mask_1);
+    auto b_rot_mask_0 = context->EvalMult(b_rot, mask_0);
+    auto b_rot_mask_1 = context->EvalMult(b_rot, mask_1);
+    auto b_ell_0 = context->EvalAdd(b_mask_1, b_rot_mask_0);
+    auto b_ell_1 = context->EvalAdd(b_mask_0, b_rot_mask_1);
+
     for (int i = 0; i < numctxt; i++) {
-        for (int l = 0; l < PSparam.ell; l++) {
-            context->EvalSubInPlace(output[i][l], PSsk_enc.b[l]);
-        }
+        context->EvalSubInPlace(output[i][0], b_ell_0);
+        context->EvalSubInPlace(output[i][1], b_ell_1);
     }
 }
 

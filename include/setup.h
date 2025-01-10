@@ -5,7 +5,7 @@
 
 struct PSSKENC {
     lbcrypto::Ciphertext<lbcrypto::DCRTPoly> a;
-    std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>> b;
+    lbcrypto::Ciphertext<lbcrypto::DCRTPoly> b;
 };
 
 void updateGlobal()
@@ -57,16 +57,13 @@ PSSKENC encryptPSsk(const lbcrypto::CryptoContext<lbcrypto::DCRTPoly>& context,
     auto PSsk_ptxt_a = context->MakePackedPlaintext(PSsk_vec);
     auto PSsk_enc_a = context->Encrypt(HEsk, PSsk_ptxt_a);
 
-    std::vector<lbcrypto::Ciphertext<lbcrypto::DCRTPoly>> PSsk_enc_b(PSparam.ell);
-    for (int l = 0; l < PSparam.ell; ++l) {
-        for (int i = 0; i < degree; ++i) {
-            PSsk_vec[i] = PSsk.b[l].ConvertToInt();
-            if (int(PSsk_vec[i]) == PSparam.q - 1) { PSsk_vec[i] = ptxt_modulus - 1; }
-        }
-
-        auto PSsk_ptxt_b = context->MakePackedPlaintext(PSsk_vec);
-        PSsk_enc_b[l] = context->Encrypt(HEsk, PSsk_ptxt_b);
+    for (int i = 0; i < degree; ++i) {
+        PSsk_vec[i] = PSsk.b[i % PSparam.ell].ConvertToInt();
+        if (int(PSsk_vec[i]) == PSparam.q - 1) { PSsk_vec[i] = ptxt_modulus - 1; }
     }
+
+    auto PSsk_ptxt_b = context->MakePackedPlaintext(PSsk_vec);
+    auto PSsk_enc_b = context->Encrypt(HEsk, PSsk_ptxt_b);
 
     return { PSsk_enc_a, PSsk_enc_b };
 }
