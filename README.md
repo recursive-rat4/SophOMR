@@ -1,6 +1,6 @@
 # SophOMR
 
-This is a proof of concept implementation of SophOMR, an oblivious message retrieval scheme.
+This is a proof of concept implementation of SophOMR, augmented with BlackLemon for snake-eye resistance.
 
 ### Contributors
 - Keewoo Lee (UC Berkeley)
